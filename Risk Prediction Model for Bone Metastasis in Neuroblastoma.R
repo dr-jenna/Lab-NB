@@ -19,10 +19,8 @@ library(Hmisc)
 library(ResourceSelection)
 library(DynNom)
 library(survey)
-library(caret)
 library(foreign)
 library(plotROC)
-library(survival)
 library(shapper)
 library(iml)
 library(e1071)
@@ -47,14 +45,10 @@ library(mice)
 library(autoReg)
 library(cvms)
 library(tibble)
-library(plotROC)
-library(pROC)
-library(ggplot2)
 library(cvms)
 library(tibble)
 library(corrplot)
 library(data.table)
-library(pheatmap)
 library(ComplexHeatmap)
 library(RColorBrewer)
 library(circlize)
@@ -63,30 +57,16 @@ library(DMwR)
 library(scales)
 library(catboost)
 library(lightgbm)
-library(plotROC)
-library(pROC)
-library(ggplot2)
 library(kernelshap)
 library(shapviz)
-setwd()
-data=read.csv()
-colnames(data)
-str(data)
-data <- data %>% select(-ID)
-data <- data %>% select(-BM)
-data <- data %>% select(-Myc)
-data <- data %>% select(-chromosome1)
-data <- data %>% select(-chromosome11)
-data <- data %>% select(-Grade)
-data$Bone<-as.factor(data$Bone)
-data$Gender<-as.factor(data$Gender)
-data$Age<-as.factor(data$Age)
-data$Primary.lesion<-as.factor(data$Primary.lesion)
-data$HGB<-as.numeric(data$HGB)
-data$PLT<-as.numeric(data$PLT)
+library(glmnet)
+setwd("The folder path for saving results")
+data=read.csv("your data file path")
+data$yourvariable<-as.factor(data$yourvariable)
+data$yourvariable<-as.numeric(data$yourvariable)
 str(data)
 set.seed(100)
-inTrain = createDataPartition(y=data[,"Bone"], p=0.7, list=F)
+inTrain = createDataPartition(y=data[,"your outcome variable"], p=0.7, list=F)
 traindata = data[inTrain,]
 testdata = data[-inTrain,]
 write.csv(traindata,"dev.csv",row.names = F)
@@ -94,12 +74,8 @@ write.csv(testdata,"vad.csv",row.names = F)
 dev=traindata
 vad=testdata
 str(vad)
-dev <- dev %>% rename(Result = Bone)
-vad <- vad %>% rename(Result = Bone)
-dev <- dev %>% select(-Time)
-dev <-dev %>% select(-Event)
-str(dev)
-library(glmnet)
+dev <- dev %>% rename(Result = "your outcome variable")
+vad <- vad %>% rename(Result = "your outcome variable")
 set.seed(100)
 lassox=as.matrix(dev[,c(2:ncol(dev))])
 lassoy=data.matrix(dev[,1])
@@ -114,48 +90,26 @@ pdf("lasso.cv.pdf",5,5)
 plot(lasso.cv,lwd=2)
 abline(v=log(c(lasso.cv$lambda.min,lasso.cv$lambda.1se)), lty="dashed",lwd=2)
 dev.off()
-
 best_lambda <- lasso.cv$lambda.min
 best_lambda
 best_model <- glmnet(lassox, lassoy, alpha = 1, family="binomial", lambda = best_lambda)
 coef=coef(best_model)
 index <- which(coef != 0)
 actCoef <- coef[index]
-
 lassovar=row.names(coef)[index]
 lassocoef=data.frame(var=lassovar,coef=actCoef)
 print(lassocoef)
 write.csv(lassocoef,"lasso_ceof.csv",row.names = F)
 lassovar=lassovar[-1]
-lassovar
-var=c("Result","BMM.","WBC","PBE.","PBM","HGB","NSE")
+var=c("Result","lassovar")
 dev = dev[,var]
 vad = vad[,var]
 dev$Result <- factor(dev$Result, levels = c(0, 1), labels = c("No", "Yes"))
 vad$Result <- factor(vad$Result, levels = c(0, 1), labels = c("No", "Yes"))
 summary(dev)
 summary(vad)
-str(vad)
-testA=read.csv()
-testA <- testA %>% rename(Result = Bone)
-testA = testA[,var]
-str(testA)
-testA$BMM.<-as.numeric(testA$BMM.)
-testA$HGB<-as.numeric(testA$HGB)
-testA$Result <- factor(testA$Result, levels = c(0, 1), labels = c("No", "Yes"))
-rm(vad)
-vad=testA
-str(vad)
-testB=read.csv()
-testB <- testB %>% rename(Result = Bone)
-testB = testB[,var]
-str(testB)
-testB$HGB<-as.numeric(testB$HGB)
-testB$Result <- factor(testB$Result, levels = c(0, 1), labels = c("No", "Yes"))
-rm(vad)
-vad=testB
 set.seed(100)
-models = c("glm","svmRadial","gbm","nnet","kknn","nb","rf")#参数
+models = c("glm","svmRadial","gbm","nnet","kknn","nb","rf")
 models_names = list(Logistic="glm",SVM="svmRadial",GBM="gbm",NeuralNetwork="nnet",KNN="kknn",RandomForest="rf",NaiveBayes="nb")
 glm.tune.grid = NULL
 svm.tune.grid = expand.grid(sigma = 0.001, C = 0.09)
@@ -171,7 +125,6 @@ rf.tune.grid = expand.grid(mtry = 10)
 nb.tune.grid = expand.grid(fL = 1, 
                            usekernel = c(TRUE, FALSE), 
                            adjust = c(1, 1.5, 2))
-
 
 Tune_table = list(glm = glm.tune.grid,
                   svmRadial = svm.tune.grid,
@@ -250,8 +203,6 @@ for(model_name in names(models_names)){
   dev.off()
 }
 
-
-
 models_names = list(Logistic="glm",SVM="svmRadial",GBM="gbm",NeuralNetwork="nnet",
                     KNN="kknn",NaiveBayes="nb",RandomForest="rf")
 Train = train_probe
@@ -295,7 +246,6 @@ for (newdata_tt in names(datalist)) {
   pdf(paste0(newdata_tt,"Calibration.pdf"),5,5,family = "serif")
   print(Calibrat_plot)
   dev.off()
-  
   
   ROC_list = list()
   ROC_label = list()
@@ -402,7 +352,6 @@ for (newdata_tt in names(datalist)) {
   
   dca_data = newdata
   dca_data$Result=ifelse(dca_data$Result=="Yes",1,0)
-  
   DCA_list = list()
   for (model_name in names(models_names)) {
     dca_formula = as.formula(paste("Result ~", model_name))
@@ -444,57 +393,46 @@ calculate_brier_score <- function(pred_prob, actual) {
   mean((pred_prob - actual_numeric)^2)
 }
 
-
 Brier_Scores_All = data.frame(DataSet = character(), Model = character(), BrierScore = numeric())
-
 
 for (newdata_tt in names(datalist)) {
   
-  
   newdata = datalist[[newdata_tt]]
   
- 
   Brier_Scores = data.frame(Model = character(), BrierScore = numeric())
   
- 
   for (model_name in names(models_names)) {
    
     pred_prob = newdata[, model_name]
     actual = newdata$Result
     
-    
     brier = calculate_brier_score(pred_prob, actual)
     
-   
     Brier_Scores = rbind(Brier_Scores, data.frame(Model = model_name, BrierScore = round(brier, 4)))
   }
   
- 
   Brier_Scores$DataSet = newdata_tt
-  
   
   Brier_Scores_All = rbind(Brier_Scores_All, Brier_Scores)
 }
 
-
 write.csv(Brier_Scores_All, "Brier_Scores_All.csv", row.names = FALSE)
 
-
-n_train = 121  
-n_test =75
+n_train = "your traindata case number"  
+n_test ="your testdata case number" 
 names(models_names)
-best_Model =  "GBM"
+best_Model =  "model name"
 explain_kernel = kernelshap(ML_calss_model[[best_Model]], dev[1:n_train,-1], bg_X = vad[1:n_test,-1])  
 
 shap_value = shapviz(explain_kernel,X_pred = dev[1:n_train,-1], interactions = TRUE) 
 
-pdf(paste0("SHAP_",best_Model,"_sv_force_B.pdf"),7,5)
+pdf(paste0("SHAP_",best_Model,"_sv_force.pdf"),7,5)
 sv_force(shap_value$Yes, row_id = 12,size = 9)+
   ggtitle(label = paste0("",best_Model))+
   theme(plot.title = element_text(hjust = 0.5,face = "bold",color = "black"))
 dev.off()
 
-pdf(paste0("SHAP_",best_Model,"_importance_beeswarm_B.pdf"),7,5)
+pdf(paste0("SHAP_",best_Model,"_importance_beeswarm.pdf"),7,5)
 sv_importance(shap_value$Yes, kind = "beeswarm", 
               viridis_args = list(begin = 0.25, end = 0.85, option = "B"),
               show_numbers = F)+
@@ -504,7 +442,7 @@ sv_importance(shap_value$Yes, kind = "beeswarm",
   theme(plot.title = element_text(hjust = 0.5,face = "bold",color = "black"))
 dev.off()
 
-pdf(paste0("SHAP_",best_Model,"_importance_bar_B.pdf"),7,5)
+pdf(paste0("SHAP_",best_Model,"_importance_bar.pdf"),7,5)
 sv_importance(shap_value$Yes, kind = "bar", show_numbers = F,
               fill = "#fca50a",
               class = "Yes")+
@@ -513,7 +451,7 @@ sv_importance(shap_value$Yes, kind = "bar", show_numbers = F,
   theme(plot.title = element_text(hjust = 0.5,face = "bold",color = "black"))
 dev.off()
 
-pdf(paste0("SHAP_",best_Model,"_waterfall_B.pdf"),5,5)
+pdf(paste0("SHAP_",best_Model,"_waterfall.pdf"),5,5)
 sv_waterfall(shap_value$Yes, row_id = 12,
              fill_colors = c("#f7d13d", "#a52c60"))+
   theme_bw()+
