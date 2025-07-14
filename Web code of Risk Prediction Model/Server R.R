@@ -8,13 +8,8 @@ library(shiny)
 library(gridExtra)
 server <- function(input,output){observeEvent(input$goButton, {
   output$piediagram<-renderPlot({
-    
-    var=c("Result","BMM.","WBC","PBE.","PBM","HGB","NSE")
-    
     dev=read.csv("dev.csv",header = T,encoding = "GBK")
     dev$Result = factor(dev$Result,levels = c(0,1),labels = c('No','Yes'))
-    dev = dev[,var]
-    
     set.seed(100)
     train.control <- trainControl(method = 'repeatedcv',
                                   number = 5, 
@@ -29,9 +24,6 @@ server <- function(input,output){observeEvent(input$goButton, {
       shrinkage = 0.1,
       n.minobsinnode = 10
     )
-    
-    
-    
     set.seed(100)
     model = train(Result~.,
                   data = dev,
@@ -43,8 +35,8 @@ server <- function(input,output){observeEvent(input$goButton, {
     save(model,file = "model.RData")
     load("model.RData")
     
-    vaddata=data.frame(BMM.=input$BMM.,WBC=input$WBC,
-                       PBE.=input$PBE.,PBM= input$PBM,HGB = input$HGB,NSE = input$NSE)
+    vaddata=data.frame(variable1=input$variable1,variable2=input$variable2,
+                       variable2=input$variable2)
     
     vaddata <- as.data.frame(lapply(vaddata, function(x) {
       if (is.character(x)) {
@@ -52,7 +44,7 @@ server <- function(input,output){observeEvent(input$goButton, {
       }
       return(x)
     }))
-) 
+
     
     test_pro = predict(model, newdata = vaddata, type = 'prob')[2]
     test_pro = as.numeric(test_pro[,1])

@@ -6,11 +6,9 @@ library(pROC)
 library(ggforce)
 library(shiny)
 library(gridExtra)
-setwd()
-var=c("Result","BMM.","WBC","PBE.","PBM","HGB","NSE")
+setwd("Your folder path for saving results")
 dev=read.csv("dev.csv",header = T,encoding = "GBK")
 dev$Result = factor(dev$Result,levels = c(0,1),labels = c('No','Yes'))
-dev = dev[,var]
 set.seed(100)
 train.control <- trainControl(method = 'repeatedcv',
                               number = 5, 
@@ -30,12 +28,12 @@ model = train(Result~.,
               data = dev,
               tuneGrid = gbm.tune.grid, 
               metric='ROC',
-              method= "gbm",           
+              method= gbm,           
               trControl=train.control)
 
 save(model,file = "model.RData")
 load("model.RData")
-vaddata=data.frame(BMM.=0.5,WBC=9.03,PBE.=0.2,PBM=0.51,HGB=92,NSE=343.9) 
+vaddata=data.frame(yourvariable1=,yourvariable2=,yourvariable3=) 
 test_pro = predict(model, newdata = vaddata, type = 'prob')[2]
 test_pro = as.numeric(test_pro[,1])
 ratio = c(test_pro*100,(1-test_pro)*100)
@@ -66,7 +64,6 @@ ggplot(A)+
     plot.title = element_text(hjust=0.5,face = "bold",size = 8),
     legend.title = element_blank()
   )+
-  #labs(title = "Male individuals")+
   scale_x_continuous(breaks = NULL)+
   scale_y_continuous(breaks = NULL)+
   scale_fill_manual(values=c("Risk" = "#FFC0CB", "non-Risk" = "#7ac7e0"),

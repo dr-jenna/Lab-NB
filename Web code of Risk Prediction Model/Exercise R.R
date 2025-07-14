@@ -7,40 +7,20 @@ library(ggforce)
 library(shiny)
 library(gridExtra)
 ui <- fluidPage(
-  titlePanel("Machine-Learning-Driven Predictive Modeling for Bone Metastasis in Neuroblastoma"),     
+  titlePanel("your web name"),     
   sidebarLayout(      
     sidebarPanel(
       
      
       fluidRow(
         column(8,
-               numericInput("BMM.",h5("BMM.(%)"),
-                            min = 0,max = 20,value = 10))),
+               numericInput("your varianle1",h5("your varianle1(variable1 Unit)"),
+                            min = ,max = ,value = ))),
       
       fluidRow(
         column(8,
-               numericInput("WBC",h5("WBC(*10^9/L)"),
-                            min = 1,max = 25,value = 15))),
-      
-      fluidRow(
-        column(8,
-               numericInput("PBE.",h5("PBE.(%)"),
-                            min = 0,max = 25,value = 15))),
-     
-      fluidRow(
-        column(8,
-               numericInput("PBM",h5("PBM(*10^9/L)"),
-                            min = 0,max = 5,value = 3))),
-      
-      fluidRow(
-        column(8,
-               numericInput("HGB",h5("HGB(g/L)"),
-                            min = 0,max = 200,value = 100))),
-      
-      fluidRow(
-        column(8,
-               numericInput("NSE",h5("NSE(ng/mL)"),
-                            min = 9.9,max = 2120,value = 300))),
+               numericInput("your varianle2",h5("your varianle2(variable2 Unit)"),
+                            min = ,max = ,value = ))),
      
       actionButton("goButton", "Predict")
     ),
@@ -56,12 +36,8 @@ ui <- fluidPage(
 server <- function(input,output){observeEvent(input$goButton, {
   output$piediagram<-renderPlot({
     
-    var=c("Result","BMM.","WBC","PBE.","PBM","HGB","NSE")
-    
     dev=read.csv("dev.csv",header = T,encoding = "GBK")
     dev$Result = factor(dev$Result,levels = c(0,1),labels = c('No','Yes'))
-    dev = dev[,var]
-    
     set.seed(100)
     train.control <- trainControl(method = 'repeatedcv',
                                   number = 5, 
@@ -90,8 +66,8 @@ server <- function(input,output){observeEvent(input$goButton, {
     save(model,file = "model.RData")
     load("model.RData")
     
-    vaddata=data.frame(BMM.=input$BMM.,WBC=input$WBC,
-                       PBE.=input$PBE.,PBM= input$PBM,HGB = input$HGB,NSE = input$NSE)
+    vaddata=data.frame(variable1=input$variable1,variable2=input$variable2,
+                       variable3 = input$variable3)
     
     vaddata <- as.data.frame(lapply(vaddata, function(x) {
       if (is.character(x)) {
@@ -133,7 +109,6 @@ server <- function(input,output){observeEvent(input$goButton, {
         plot.title = element_text(hjust=0.5,face = "bold",size = 8),
         legend.title = element_blank()
       )+
-      #labs(title = "Male individuals")+
       scale_x_continuous(breaks = NULL)+
       scale_y_continuous(breaks = NULL)+
       scale_fill_manual(values=c("#FFC0CB", "#7ac7e0"),
